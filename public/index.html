@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多人记账本 - 实时同步</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* 登录/创建房间界面 */
+        .auth-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 450px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .auth-container h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+        }
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e0e0e0;
+        }
+        .divider span {
+            background: white;
+            padding: 0 15px;
+            position: relative;
+            color: #999;
+        }
+
+        /* 主界面 */
+        .main-container {
+            display: none;
+        }
+        .room-info {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .room-code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            cursor: pointer;
+            user-select: all;
+        }
+        .room-code:hover {
+            text-decoration: underline;
+        }
+        .members-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .member-tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .member-tag.me {
+            background: #667eea;
+            color: white;
+        }
+
+        /* 内容区域 */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 卡片 */
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h3::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        /* 表单样式 */
+        select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* 参与人选择 */
+        .participants-select {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .participant-option {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .participant-option:hover {
+            border-color: #667eea;
+        }
+        .participant-option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* 统计 */
+        .total-display {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            border-radius: 15px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .total-display .label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .total-display .value {
+            font-size: 48px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .stat-item .label {
+            font-size: 12px;
+            color: #666;
+        }
+        .stat-item .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
+
+        /* AA 结果 */
+        .aa-result {
+            background: #e8f5e9;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .aa-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #c8e6c9;
+        }
+        .aa-item:last-child {
+            border-bottom: none;
+        }
+        .aa-item .from-to {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .aa-item .arrow {
+            color: #4caf50;
+        }
+        .aa-item .amount {
+            font-weight: bold;
+            color: #2e7d32;
+            font-size: 18px;
+        }
+        .balance-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        .balance-positive {
+            color: #2e7d32;
+        }
+        .balance-negative {
+            color: #c62828;
+        }
+
+        /* 消费列表 */
+        .expense-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .expense-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .expense-info {
+            flex: 1;
+        }
+        .expense-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        .expense-category {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .expense-amount {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .expense-meta {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .btn-delete {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-delete:hover {
+            background: #ee5a5a;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        /* 在线状态 */
+        .online-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #4caf50;
+            font-size: 14px;
+        }
+        .online-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📒 多人记账本</h1>
+
+        <!-- 登录/创建房间界面 -->
+        <div class="auth-container" id="authContainer">
+            <h2>开始记账</h2>
+            <div class="form-group">
+                <label>你的昵称</label>
+                <input type="text" id="nicknameInput" placeholder="输入你的昵称" value="我">
+            </div>
+            <button class="btn btn-primary" onclick="createRoom()">创建新房间</button>
+            <div class="divider"><span>或</span></div>
+            <div class="form-group">
+                <label>房间码</label>
+                <input type="text" id="roomCodeInput" placeholder="输入6位房间码">
+            </div>
+            <button class="btn btn-success" onclick="joinRoom()">加入房间</button>
+        </div>
+
+        <!-- 主界面 -->
+        <div class="main-container" id="mainContainer">
+            <div class="room-info">
+                <div>
+                    <div style="font-size: 14px; color: #666; margin-bottom: 5px;">
+                        房间码（分享给朋友）
+                    </div>
+                    <div class="room-code" id="roomCodeDisplay" onclick="copyRoomCode()">-</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="online-status">实时同步中</div>
+                    <div class="members-list" id="membersList"></div>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- 左侧：添加记录 -->
+                <div>
+                    <div class="card" style="margin-bottom: 20px;">
+                        <h3>记一笔</h3>
+                        <form id="expenseForm" onsubmit="addExpense(event)">
+                            <div class="form-group">
+                                <label>时间</label>
+                                <input type="datetime-local" id="datetime" required>
+                            </div>
+                            <div class="form-group">
+                                <label>类型</label>
+                                <select id="category" required>
+                                    <option value="餐饮">🍔 餐饮</option>
+                                    <option value="交通">🚗 交通</option>
+                                    <option value="购物">🛍️ 购物</option>
+                                    <option value="娱乐">🎮 娱乐</option>
+                                    <option value="居住">🏠 居住</option>
+                                    <option value="医疗">🏥 医疗</option>
+                                    <option value="学习">📚 学习</option>
+                                    <option value="其他">📦 其他</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>金额（元）</label>
+                                <input type="number" id="amount" step="0.01" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>付款人</label>
+                                <select id="payer" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label>参与人（点击选择/取消）</label>
+                                <div class="participants-select" id="participantsSelect"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>备注</label>
+                                <input type="text" id="note" placeholder="可选">
+                            </div>
+                            <button type="submit" class="btn btn-primary">添加记录</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h3>统计概览</h3>
+                        <div class="total-display">
+                            <div class="label">总支出</div>
+                            <div class="value">¥<span id="totalAmount">0.00</span></div>
+                        </div>
+                        <div class="stat-grid" id="statGrid"></div>
+                    </div>
+                </div>
+
+                <!-- 右侧：AA 和记录列表 -->
+                <div>
+                    <div class="card" style="margin-bottom: 20px;">
+                        <h3>AA 制结算</h3>
+                        <div id="aaResult">
+                            <div class="empty-state">暂无消费记录</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>消费记录</h3>
+                        <div class="expense-list" id="expenseList">
+                            <div class="empty-state">暂无记录</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentRoom = null;
+        let currentNickname = '';
+        let members = [];
+        let expenses = [];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('datetime').value = now.toISOString().slice(0, 16);
+        });
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // 创建房间
+        async function createRoom() {
+            const nickname = document.getElementById('nicknameInput').value.trim();
+            if (!nickname) {
+                showToast('请输入昵称');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/room/create', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    currentRoom = data.roomCode;
+                    currentNickname = nickname;
+                    await joinRoomInternal(currentRoom, nickname);
+                }
+            } catch (err) {
+                showToast('创建房间失败');
+            }
+        }
+
+        // 加入房间
+        async function joinRoom() {
+            const nickname = document.getElementById('nicknameInput').value.trim();
+            const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+
+            if (!nickname) {
+                showToast('请输入昵称');
+                return;
+            }
+            if (!roomCode) {
+                showToast('请输入房间码');
+                return;
+            }
+
+            currentRoom = roomCode;
+            currentNickname = nickname;
+            await joinRoomInternal(roomCode, nickname);
+        }
+
+        // 内部加入房间逻辑
+        async function joinRoomInternal(roomCode, nickname) {
+            try {
+                const res = await fetch('/api/room/join', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roomCode, nickname })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    members = data.members;
+                    expenses = data.expenses;
+                    enterMainInterface(roomCode);
+                    setupSocketListeners();
+                    updateUI();
+                    showToast('成功进入房间！');
+                } else {
+                    showToast(data.error || '加入失败');
+                }
+            } catch (err) {
+                showToast('网络错误');
+            }
+        }
+
+        // 进入主界面
+        function enterMainInterface(roomCode) {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+            document.getElementById('roomCodeDisplay').textContent = roomCode;
+
+            // 更新付款人选择
+            updatePayerSelect();
+            // 更新参与人选择
+            updateParticipantsSelect();
+        }
+
+        // 设置 Socket 监听
+        function setupSocketListeners() {
+            socket.emit('room:join', currentRoom);
+
+            socket.on('expense:added', (expense) => {
+                expenses.unshift(expense);
+                updateUI();
+                showToast(`${expense.createdBy || '有人'} 添加了一笔消费`);
+            });
+
+            socket.on('expense:deleted', (data) => {
+                expenses = expenses.filter(e => e.id !== data.id);
+                updateUI();
+            });
+        }
+
+        // 更新付款人下拉框
+        function updatePayerSelect() {
+            const select = document.getElementById('payer');
+            select.innerHTML = members.map(m =>
+                `<option value="${m}" ${m === currentNickname ? 'selected' : ''}>${m}</option>`
+            ).join('');
+        }
+
+        // 更新参与人选择
+        function updateParticipantsSelect() {
+            const container = document.getElementById('participantsSelect');
+            container.innerHTML = members.map(m => {
+                const isSelected = m === currentNickname;
+                return `<div class="participant-option ${isSelected ? 'selected' : ''}" onclick="toggleParticipant(this, '${m}')">${m}</div>`;
+            }).join('');
+        }
+
+        // 切换参与人选择
+        function toggleParticipant(el, name) {
+            el.classList.toggle('selected');
+        }
+
+        // 添加消费记录
+        async function addExpense(e) {
+            e.preventDefault();
+
+            const selectedParticipants = Array.from(document.querySelectorAll('.participant-option.selected'))
+                .map(el => el.textContent);
+
+            if (selectedParticipants.length === 0) {
+                showToast('至少选择一位参与人');
+                return;
+            }
+
+            const expense = {
+                datetime: document.getElementById('datetime').value,
+                category: document.getElementById('category').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                payer: document.getElementById('payer').value,
+                participants: selectedParticipants,
+                note: document.getElementById('note').value,
+                createdBy: currentNickname
+            };
+
+            try {
+                const res = await fetch(`/api/expenses/${currentRoom}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(expense)
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('expenseForm').reset();
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                    document.getElementById('datetime').value = now.toISOString().slice(0, 16);
+                    updateParticipantsSelect();
+                }
+            } catch (err) {
+                showToast('添加失败');
+            }
+        }
+
+        // 删除消费记录
+        async function deleteExpense(id) {
+            if (!confirm('确定删除这条记录吗？')) return;
+
+            try {
+                await fetch(`/api/expenses/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roomCode: currentRoom })
+                });
+            } catch (err) {
+                showToast('删除失败');
+            }
+        }
+
+        // 更新界面
+        function updateUI() {
+            updateMembersList();
+            updateExpenseList();
+            updateStats();
+            updateAA();
+        }
+
+        // 更新成员列表
+        function updateMembersList() {
+            const container = document.getElementById('membersList');
+            container.innerHTML = members.map(m =>
+                `<span class="member-tag ${m === currentNickname ? 'me' : ''}">${m}</span>`
+            ).join('');
+        }
+
+        // 更新消费列表
+        function updateExpenseList() {
+            const container = document.getElementById('expenseList');
+
+            if (expenses.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无记录</div>';
+                return;
+            }
+
+            container.innerHTML = expenses.map(exp => {
+                const date = new Date(exp.datetime);
+                const timeStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+                return `
+                <div class="expense-item">
+                    <div class="expense-info">
+                        <div class="expense-header">
+                            <span class="expense-category">${exp.category}</span>
+                            <span class="expense-amount">¥${exp.amount.toFixed(2)}</span>
+                        </div>
+                        <div class="expense-meta">
+                            ${timeStr} · ${exp.payer}付款 · 参与: ${exp.participants.join(', ')}
+                            ${exp.note ? ' · ' + exp.note : ''}
+                        </div>
+                    </div>
+                    <button class="btn-delete" onclick="deleteExpense(${exp.id})">删除</button>
+                </div>
+            `}).join('');
+        }
+
+        // 更新统计
+        function updateStats() {
+            const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+            document.getElementById('totalAmount').textContent = total.toFixed(2);
+
+            // 按类型统计
+            const byCategory = {};
+            expenses.forEach(e => {
+                byCategory[e.category] = (byCategory[e.category] || 0) + e.amount;
+            });
+
+            const statGrid = document.getElementById('statGrid');
+            if (Object.keys(byCategory).length === 0) {
+                statGrid.innerHTML = '<div style="color:#999;font-size:14px;">暂无统计数据</div>';
+            } else {
+                statGrid.innerHTML = Object.entries(byCategory).map(([cat, amt]) => `
+                    <div class="stat-item">
+                        <div class="label">${cat}</div>
+                        <div class="value">¥${amt.toFixed(2)}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 更新 AA 计算
+        function updateAA() {
+            const container = document.getElementById('aaResult');
+
+            if (expenses.length === 0 || members.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无消费记录</div>';
+                return;
+            }
+
+            // 计算余额
+            const balance = {};
+            members.forEach(m => balance[m] = 0);
+
+            expenses.forEach(exp => {
+                const payer = exp.payer;
+                const participants = exp.participants || [];
+                const amount = exp.amount;
+
+                if (!balance[payer]) balance[payer] = 0;
+                balance[payer] += amount;
+
+                if (participants.length > 1) {
+                    const perPerson = amount / participants.length;
+                    participants.forEach(p => {
+                        if (!balance[p]) balance[p] = 0;
+                        balance[p] -= perPerson;
+                    });
+                }
+            });
+
+            // 计算转账建议
+            const receivers = [];
+            const payersList = [];
+
+            Object.entries(balance).forEach(([name, amt]) => {
+                if (amt > 0.01) receivers.push({ name, amt });
+                else if (amt < -0.01) payersList.push({ name, amt: -amt });
+            });
+
+            const transactions = [];
+            payersList.forEach(payer => {
+                let remaining = payer.amt;
+                receivers.forEach(receiver => {
+                    if (remaining <= 0) return;
+                    const transfer = Math.min(remaining, receiver.amt);
+                    if (transfer > 0.01) {
+                        transactions.push({
+                            from: payer.name,
+                            to: receiver.name,
+                            amount: transfer
+                        });
+                        remaining -= transfer;
+                        receiver.amt -= transfer;
+                    }
+                });
+            });
+
+            // 生成 HTML
+            let html = '<div class="aa-result">';
+
+            if (transactions.length > 0) {
+                html += '<h4 style="margin-bottom:15px;color:#2e7d32;">建议转账</h4>';
+                html += transactions.map(t => `
+                    <div class="aa-item">
+                        <div class="from-to">
+                            <span>${t.from}</span>
+                            <span class="arrow">→</span>
+                            <span>${t.to}</span>
+                        </div>
+                        <span class="amount">¥${t.amount.toFixed(2)}</span>
+                    </div>
+                `).join('');
+            } else {
+                html += '<p style="color:#2e7d32;text-align:center;">账目已平衡！</p>';
+            }
+
+            html += '<h4 style="margin:20px 0 10px;color:#666;">每人余额</h4>';
+            Object.entries(balance).forEach(([name, amt]) => {
+                if (Math.abs(amt) > 0.01) {
+                    const isPositive = amt > 0;
+                    html += `
+                        <div class="balance-item">
+                            <span>${name}</span>
+                            <span class="${isPositive ? 'balance-positive' : 'balance-negative'}">
+                                ${isPositive ? '应收' : '应付'} ¥${Math.abs(amt).toFixed(2)}
+                            </span>
+                        </div>
+                    `;
+                }
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // 复制房间码
+        function copyRoomCode() {
+            const code = document.getElementById('roomCodeDisplay').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('房间码已复制！');
+            });
+        }
+    </script>
+</body>
+</html>
