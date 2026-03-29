@@ -33,3 +33,10 @@ npm start
 ## 环境变量
 - `DB_PATH`: 数据库路径，默认 `/data/expenses.db`
 - `PORT`: 服务器端口，默认 `3000`
+
+## 开发流程
+1. 本地修改代码并验证
+2. 让 Claude 推送到 GitHub（已配置 Railway 自动部署）
+3. Railway 自动 build 并部署
+
+**注意**: 用户验证完变更后，Claude 直接推送到 GitHub，无需二次确认。
