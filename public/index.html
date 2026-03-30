@@ -11,10 +11,11 @@
             box-sizing: border-box;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', 'PingFang SC', sans-serif;
+            background: #FAF0E6 url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4A373' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
             min-height: 100vh;
             padding: 20px;
+            color: #5D4037;
         }
         .container {
             max-width: 1200px;
@@ -22,25 +23,31 @@
         }
         h1 {
             text-align: center;
-            color: white;
+            color: #5D4037;
             margin-bottom: 30px;
             font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #E9C46A;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
         }
 
-        /* 登录/创建房间界面 */
+        /* 登录/创建项目界面 - 手绘风格 */
         .auth-container {
-            background: white;
-            border-radius: 20px;
+            background: #FFF8E7;
+            border: 3px solid #D4A373;
+            border-radius: 20px 15px 25px 18px;
             padding: 40px;
             max-width: 450px;
             margin: 0 auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 4px 4px 0 rgba(93, 64, 55, 0.15);
+            transform: rotate(-0.5deg);
         }
         .auth-container h2 {
             text-align: center;
-            color: #333;
+            color: #5D4037;
             margin-bottom: 30px;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+            font-size: 1.8rem;
         }
         .form-group {
             margin-bottom: 20px;
@@ -48,47 +55,61 @@
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
+            color: #5D4037;
+            font-weight: bold;
+            font-size: 15px;
         }
         .form-group input {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            border: 2px solid #D7CCC8;
+            border-radius: 8px 12px 10px 15px;
             font-size: 16px;
-            transition: border-color 0.3s;
+            background: #FFF;
+            color: #5D4037;
+            transition: all 0.3s;
         }
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #D4A373;
+            box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.2);
         }
         .btn {
             width: 100%;
             padding: 14px;
-            border: none;
-            border-radius: 10px;
+            border: 2px solid #5D4037;
+            border-radius: 10px 8px 12px 15px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #D4A373;
+            color: #FFF;
+            box-shadow: 3px 3px 0 #5D4037;
         }
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            background: #C49365;
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0 #5D4037;
         }
         .btn-success {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
+            background: #E9C46A;
+            color: #5D4037;
+            box-shadow: 3px 3px 0 #5D4037;
+        }
+        .btn-success:hover {
+            background: #E0BB5A;
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0 #5D4037;
         }
         .divider {
             text-align: center;
             margin: 25px 0;
             position: relative;
+            color: #8D6E63;
         }
         .divider::before {
             content: '';
@@ -96,41 +117,57 @@
             top: 50%;
             left: 0;
             right: 0;
-            height: 1px;
-            background: #e0e0e0;
+            height: 2px;
+            background: repeating-linear-gradient(
+                90deg,
+                #D7CCC8 0px,
+                #D7CCC8 5px,
+                transparent 5px,
+                transparent 10px
+            );
         }
         .divider span {
-            background: white;
+            background: #FFF8E7;
             padding: 0 15px;
             position: relative;
-            color: #999;
+            color: #8D6E63;
+            font-style: italic;
         }
 
         /* 快速进入提示卡片 */
         .quick-enter-card {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            border-radius: 12px;
+            background: #FFF9C4;
+            border: 3px solid #E9C46A;
+            border-radius: 15px 20px 18px 12px;
             padding: 20px;
             margin-bottom: 20px;
-            border: 2px solid #90caf9;
+            box-shadow: 3px 3px 0 rgba(93, 64, 55, 0.1);
+            transform: rotate(0.5deg);
             display: none;
         }
         .quick-enter-card.show {
             display: block;
         }
         .quick-enter-card h3 {
-            color: #1976d2;
+            color: #5D4037;
             font-size: 16px;
             margin-bottom: 10px;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
         }
         .quick-enter-card p {
-            color: #555;
+            color: #5D4037;
             font-size: 14px;
             margin-bottom: 15px;
         }
         .quick-enter-card .room-code {
             font-weight: bold;
-            color: #1565c0;
+            color: #D4A373;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            background: #FFF;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #D7CCC8;
         }
         .quick-enter-buttons {
             display: flex;
@@ -142,11 +179,15 @@
             font-size: 14px;
         }
         .btn-secondary {
-            background: #e0e0e0;
-            color: #555;
+            background: #D7CCC8;
+            color: #5D4037;
+            border: 2px solid #5D4037;
+            box-shadow: 2px 2px 0 #5D4037;
         }
         .btn-secondary:hover {
-            background: #d0d0d0;
+            background: #C9BEB5;
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0 #5D4037;
         }
 
         /* 主界面 */
@@ -154,8 +195,9 @@
             display: none;
         }
         .room-info {
-            background: rgba(255,255,255,0.95);
-            border-radius: 15px;
+            background: #FFF8E7;
+            border: 3px solid #D4A373;
+            border-radius: 15px 20px 18px 12px;
             padding: 20px;
             margin-bottom: 20px;
             display: flex;
@@ -163,16 +205,24 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
+            box-shadow: 4px 4px 0 rgba(93, 64, 55, 0.1);
+            transform: rotate(-0.3deg);
         }
         .room-code {
             font-size: 24px;
             font-weight: bold;
-            color: #667eea;
+            color: #D4A373;
             cursor: pointer;
             user-select: all;
+            font-family: 'Courier New', monospace;
+            background: #FFF;
+            padding: 5px 12px;
+            border-radius: 8px;
+            border: 2px dashed #D4A373;
         }
         .room-code:hover {
-            text-decoration: underline;
+            background: #FFF9C4;
+            border-style: solid;
         }
         .members-list {
             display: flex;
@@ -180,15 +230,18 @@
             flex-wrap: wrap;
         }
         .member-tag {
-            background: #e3f2fd;
-            color: #1976d2;
+            background: #FFE0B2;
+            color: #5D4037;
             padding: 5px 12px;
-            border-radius: 20px;
+            border-radius: 15px 20px 18px 12px;
             font-size: 14px;
+            border: 2px solid #D4A373;
+            font-weight: bold;
         }
         .member-tag.me {
-            background: #667eea;
-            color: white;
+            background: #D4A373;
+            color: #FFF;
+            border: 2px solid #5D4037;
         }
 
         /* 内容区域 */
@@ -205,24 +258,27 @@
 
         /* 卡片 */
         .card {
-            background: rgba(255,255,255,0.95);
-            border-radius: 15px;
+            background: #FFF8E7;
+            border: 3px solid #D4A373;
+            border-radius: 20px 15px 25px 18px;
             padding: 25px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            box-shadow: 4px 4px 0 rgba(93, 64, 55, 0.1);
+            transform: rotate(0.2deg);
         }
         .card h3 {
-            color: #333;
+            color: #5D4037;
             margin-bottom: 20px;
             font-size: 18px;
             display: flex;
             align-items: center;
             gap: 10px;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
         }
         .card h3::before {
             content: '';
             width: 4px;
             height: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #D4A373;
             border-radius: 2px;
         }
 
@@ -230,14 +286,17 @@
         select, textarea {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            border: 2px solid #D7CCC8;
+            border-radius: 8px 12px 10px 15px;
             font-size: 16px;
-            transition: border-color 0.3s;
+            background: #FFF;
+            color: #5D4037;
+            transition: all 0.3s;
         }
         select:focus, textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #D4A373;
+            box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.2);
         }
         textarea {
             resize: vertical;
@@ -252,38 +311,45 @@
         }
         .participant-option {
             padding: 8px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 25px;
+            border: 2px solid #D7CCC8;
+            border-radius: 20px 15px 25px 18px;
             cursor: pointer;
             transition: all 0.3s;
             font-size: 14px;
+            background: #FFF;
+            color: #5D4037;
         }
         .participant-option:hover {
-            border-color: #667eea;
+            border-color: #D4A373;
+            background: #FFF9C4;
         }
         .participant-option.selected {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
+            background: #D4A373;
+            color: #FFF;
+            border-color: #5D4037;
         }
 
         /* 统计 */
         .total-display {
             text-align: center;
             padding: 30px;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
-            border-radius: 15px;
-            color: white;
+            background: #E9C46A;
+            border: 3px solid #5D4037;
+            border-radius: 20px 15px 25px 18px;
+            color: #5D4037;
             margin-bottom: 20px;
+            box-shadow: 4px 4px 0 rgba(93, 64, 55, 0.2);
+            transform: rotate(-0.5deg);
         }
         .total-display .label {
             font-size: 14px;
-            opacity: 0.9;
+            font-weight: bold;
         }
         .total-display .value {
             font-size: 48px;
             font-weight: bold;
             margin-top: 10px;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
         }
         .stat-grid {
             display: grid;
@@ -291,33 +357,38 @@
             gap: 10px;
         }
         .stat-item {
-            background: #f8f9fa;
+            background: #FFF9C4;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 15px 20px 18px 12px;
+            border: 2px solid #E9C46A;
         }
         .stat-item .label {
             font-size: 12px;
-            color: #666;
+            color: #8D6E63;
+            font-weight: bold;
         }
         .stat-item .value {
             font-size: 20px;
             font-weight: bold;
-            color: #333;
+            color: #5D4037;
             margin-top: 5px;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
         }
 
         /* AA 结果 */
         .aa-result {
-            background: #e8f5e9;
-            border-radius: 10px;
+            background: #E8F5E9;
+            border: 2px solid #81C784;
+            border-radius: 20px 15px 25px 18px;
             padding: 20px;
+            box-shadow: 3px 3px 0 rgba(93, 64, 55, 0.1);
         }
         .aa-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px 0;
-            border-bottom: 1px solid #c8e6c9;
+            border-bottom: 2px dashed #A5D6A7;
         }
         .aa-item:last-child {
             border-bottom: none;
@@ -328,12 +399,14 @@
             gap: 10px;
         }
         .aa-item .arrow {
-            color: #4caf50;
+            color: #4CAF50;
+            font-weight: bold;
         }
         .aa-item .amount {
             font-weight: bold;
-            color: #2e7d32;
+            color: #2E7D32;
             font-size: 18px;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
         }
         .balance-item {
             display: flex;
@@ -341,10 +414,12 @@
             padding: 8px 0;
         }
         .balance-positive {
-            color: #2e7d32;
+            color: #2E7D32;
+            font-weight: bold;
         }
         .balance-negative {
-            color: #c62828;
+            color: #C62828;
+            font-weight: bold;
         }
 
         /* 消费列表 */
@@ -353,13 +428,16 @@
             overflow-y: auto;
         }
         .expense-item {
-            background: #f8f9fa;
-            border-radius: 10px;
+            background: #FFF8E7;
+            border: 2px solid #D7CCC8;
+            border-radius: 20px 15px 25px 18px;
             padding: 15px;
             margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            box-shadow: 3px 3px 0 rgba(93, 64, 55, 0.1);
+            transform: rotate(-0.2deg);
         }
         .expense-info {
             flex: 1;
@@ -371,71 +449,85 @@
             margin-bottom: 5px;
         }
         .expense-category {
-            background: #667eea;
-            color: white;
+            background: #D4A373;
+            color: #FFF;
             padding: 2px 8px;
-            border-radius: 4px;
+            border-radius: 8px 12px 10px 15px;
             font-size: 12px;
+            font-weight: bold;
         }
         .expense-amount {
             font-size: 20px;
             font-weight: bold;
-            color: #333;
+            color: #5D4037;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
         }
         .expense-meta {
             font-size: 13px;
-            color: #666;
+            color: #8D6E63;
             margin-top: 5px;
         }
         .btn-delete {
-            background: #ff6b6b;
-            color: white;
-            border: none;
+            background: #E57373;
+            color: #FFF;
+            border: 2px solid #5D4037;
             padding: 5px 12px;
-            border-radius: 5px;
+            border-radius: 8px 12px 10px 15px;
             cursor: pointer;
             font-size: 12px;
+            font-weight: bold;
+            box-shadow: 2px 2px 0 #5D4037;
         }
         .btn-delete:hover {
-            background: #ee5a5a;
+            background: #EF5350;
+            transform: translate(-1px, -1px);
         }
         .btn-edit {
-            background: #4a90d9;
-            color: white;
-            border: none;
+            background: #81C784;
+            color: #FFF;
+            border: 2px solid #5D4037;
             padding: 5px 12px;
-            border-radius: 5px;
+            border-radius: 8px 12px 10px 15px;
             cursor: pointer;
             font-size: 12px;
+            font-weight: bold;
             margin-right: 8px;
+            box-shadow: 2px 2px 0 #5D4037;
         }
         .btn-edit:hover {
-            background: #357abd;
+            background: #66BB6A;
+            transform: translate(-1px, -1px);
         }
         .btn-save {
-            background: #27ae60;
-            color: white;
-            border: none;
+            background: #4CAF50;
+            color: #FFF;
+            border: 2px solid #5D4037;
             padding: 5px 12px;
-            border-radius: 5px;
+            border-radius: 8px 12px 10px 15px;
             cursor: pointer;
             font-size: 12px;
+            font-weight: bold;
             margin-right: 8px;
+            box-shadow: 2px 2px 0 #5D4037;
         }
         .btn-save:hover {
-            background: #219a52;
+            background: #43A047;
+            transform: translate(-1px, -1px);
         }
         .btn-cancel {
-            background: #95a5a6;
-            color: white;
-            border: none;
+            background: #B0BEC5;
+            color: #5D4037;
+            border: 2px solid #5D4037;
             padding: 5px 12px;
-            border-radius: 5px;
+            border-radius: 8px 12px 10px 15px;
             cursor: pointer;
             font-size: 12px;
+            font-weight: bold;
+            box-shadow: 2px 2px 0 #5D4037;
         }
         .btn-cancel:hover {
-            background: #7f8c8d;
+            background: #90A4AE;
+            transform: translate(-1px, -1px);
         }
         .expense-actions {
             display: flex;
@@ -443,10 +535,12 @@
         }
         .expense-edit-form {
             display: none;
-            background: #f0f4f8;
+            background: #FFF9C4;
+            border: 2px solid #E9C46A;
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 15px 20px 18px 12px;
             margin-top: 10px;
+            box-shadow: 3px 3px 0 rgba(93, 64, 55, 0.1);
         }
         .expense-edit-form.show {
             display: block;
@@ -457,15 +551,18 @@
         .edit-field label {
             display: block;
             font-size: 12px;
-            color: #666;
+            color: #5D4037;
             margin-bottom: 4px;
+            font-weight: bold;
         }
         .edit-field input, .edit-field select {
             width: 100%;
             padding: 6px 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            border: 2px solid #D7CCC8;
+            border-radius: 8px 12px 10px 15px;
             font-size: 14px;
+            background: #FFF;
+            color: #5D4037;
         }
         .edit-actions {
             display: flex;
@@ -477,7 +574,8 @@
         .empty-state {
             text-align: center;
             padding: 40px;
-            color: #999;
+            color: #8D6E63;
+            font-style: italic;
         }
 
         /* 在线状态 */
@@ -485,36 +583,40 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            color: #4caf50;
+            color: #4CAF50;
             font-size: 14px;
+            font-weight: bold;
         }
         .online-status::before {
             content: '';
             width: 8px;
             height: 8px;
-            background: #4caf50;
+            background: #4CAF50;
             border-radius: 50%;
             animation: pulse 2s infinite;
+            border: 2px solid #5D4037;
         }
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
 
-        /* Toast 提示 */
+        /* Toast 提示 - 手绘风格 */
         .toast {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: #333;
-            color: white;
+            background: #5D4037;
+            color: #FFF8E7;
             padding: 15px 30px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-radius: 15px 20px 18px 12px;
+            box-shadow: 4px 4px 0 rgba(93, 64, 55, 0.3);
             opacity: 0;
             transition: all 0.3s;
             z-index: 1000;
+            font-weight: bold;
+            border: 2px solid #D4A373;
         }
         .toast.show {
             transform: translateX(-50%) translateY(0);
@@ -526,14 +628,14 @@
     <div class="container">
         <h1>📒 多人记账本</h1>
 
-        <!-- 登录/创建房间界面 -->
+        <!-- 登录/创建项目界面 -->
         <div class="auth-container" id="authContainer">
             <h2>开始记账</h2>
 
             <!-- 快速进入提示卡片 -->
             <div class="quick-enter-card" id="quickEnterCard">
                 <h3>👋 欢迎回来！</h3>
-                <p>您之前加入过房间 <span class="room-code" id="savedRoomCode"></span>，是否以 <strong id="savedNickname"></strong> 身份直接进入？</p>
+                <p>您之前加入过记账项目 <span class="room-code" id="savedRoomCode"></span>，是否以 <strong id="savedNickname"></strong> 身份直接进入？</p>
                 <div class="quick-enter-buttons">
                     <button class="btn btn-primary" onclick="quickEnter()">直接进入</button>
                     <button class="btn btn-secondary" onclick="showNormalForm()">重新输入</button>
@@ -545,13 +647,13 @@
                 <label>你的昵称</label>
                 <input type="text" id="nicknameInput" placeholder="输入你的昵称" value="我">
             </div>
-            <button class="btn btn-primary" onclick="createRoom()">创建新房间</button>
+            <button class="btn btn-primary" onclick="createRoom()">创建新项目</button>
             <div class="divider"><span>或</span></div>
             <div class="form-group">
-                <label>房间码</label>
-                <input type="text" id="roomCodeInput" placeholder="输入6位房间码">
+                <label>项目码</label>
+                <input type="text" id="roomCodeInput" placeholder="输入6位项目码">
             </div>
-            <button class="btn btn-success" onclick="joinRoom()">加入房间</button>
+            <button class="btn btn-success" onclick="joinRoom()">加入项目</button>
             </div>
         </div>
 
@@ -560,7 +662,7 @@
             <div class="room-info">
                 <div>
                     <div style="font-size: 14px; color: #666; margin-bottom: 5px;">
-                        房间码（分享给朋友）
+                        项目码（分享给朋友）
                     </div>
                     <div class="room-code" id="roomCodeDisplay" onclick="copyRoomCode()">-</div>
                 </div>
@@ -659,11 +761,11 @@
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('datetime').value = now.toISOString().slice(0, 16);
 
-            // 检查是否有保存的房间信息
+            // 检查是否有保存的项目信息
             checkSavedRoom();
         });
 
-        // 检查保存的房间信息
+        // 检查保存的项目信息
         function checkSavedRoom() {
             try {
                 const savedData = localStorage.getItem('lastRoom');
@@ -683,7 +785,7 @@
                     }
                 }
             } catch (e) {
-                console.error('读取保存的房间信息失败', e);
+                console.error('读取保存的项目信息失败', e);
             }
         }
 
@@ -709,7 +811,7 @@
             document.getElementById('normalForm').style.display = 'block';
         }
 
-        // 保存房间信息
+        // 保存项目信息
         function saveRoomInfo(roomCode, nickname) {
             try {
                 localStorage.setItem('lastRoom', JSON.stringify({
@@ -718,7 +820,7 @@
                     timestamp: Date.now()
                 }));
             } catch (e) {
-                console.error('保存房间信息失败', e);
+                console.error('保存项目信息失败', e);
             }
         }
 
@@ -730,7 +832,7 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // 创建房间
+        // 创建项目
         async function createRoom() {
             const nickname = document.getElementById('nicknameInput').value.trim();
             if (!nickname) {
@@ -747,11 +849,11 @@
                     await joinRoomInternal(currentRoom, nickname);
                 }
             } catch (err) {
-                showToast('创建房间失败');
+                showToast('创建项目失败');
             }
         }
 
-        // 加入房间
+        // 加入项目
         async function joinRoom() {
             const nickname = document.getElementById('nicknameInput').value.trim();
             const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
@@ -761,7 +863,7 @@
                 return;
             }
             if (!roomCode) {
-                showToast('请输入房间码');
+                showToast('请输入项目码');
                 return;
             }
 
@@ -770,7 +872,7 @@
             await joinRoomInternal(roomCode, nickname);
         }
 
-        // 内部加入房间逻辑
+        // 内部加入项目逻辑
         async function joinRoomInternal(roomCode, nickname) {
             try {
                 const res = await fetch('/api/room/join', {
@@ -786,8 +888,8 @@
                     enterMainInterface(roomCode);
                     setupSocketListeners();
                     updateUI();
-                    showToast('成功进入房间！');
-                    // 保存房间信息到 localStorage
+                    showToast('成功进入项目！');
+                    // 保存项目信息到 localStorage
                     saveRoomInfo(roomCode, nickname);
                 } else {
                     showToast(data.error || '加入失败');
@@ -1219,11 +1321,11 @@
             }
         }
 
-        // 复制房间码
+        // 复制项目码
         function copyRoomCode() {
             const code = document.getElementById('roomCodeDisplay').textContent;
             navigator.clipboard.writeText(code).then(() => {
-                showToast('房间码已复制！');
+                showToast('项目码已复制！');
             });
         }
     </script>
