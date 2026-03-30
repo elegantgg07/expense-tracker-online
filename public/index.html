@@ -856,6 +856,11 @@
             el.classList.toggle('selected');
         }
 
+        // 编辑模式下切换参与人选择
+        function toggleEditParticipant(el, name) {
+            el.classList.toggle('selected');
+        }
+
         // 添加消费记录
         async function addExpense(e) {
             e.preventDefault();
@@ -903,13 +908,22 @@
             if (!confirm('确定删除这条记录吗？')) return;
 
             try {
-                await fetch(`/api/expenses/${id}`, {
+                const res = await fetch(`/api/expenses/${id}`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ roomCode: currentRoom })
                 });
+
+                if (res.ok) {
+                    // 本地立即删除，不等待 socket 事件
+                    expenses = expenses.filter(e => e.id !== id);
+                    updateUI();
+                    showToast('记录已删除');
+                } else {
+                    showToast('删除失败');
+                }
             } catch (err) {
-                showToast('删除失败');
+                showToast('网络错误');
             }
         }
 
@@ -980,6 +994,15 @@
                             <select id="edit-payer-${exp.id}">
                                 ${members.map(m => `<option value="${m}" ${m === exp.payer ? 'selected' : ''}>${m}</option>`).join('')}
                             </select>
+                        </div>
+                        <div class="edit-field">
+                            <label>参与人（点击选择/取消）</label>
+                            <div class="participants-select" id="edit-participants-${exp.id}">
+                                ${members.map(m => {
+                                    const isSelected = exp.participants.includes(m);
+                                    return `<div class="participant-option ${isSelected ? 'selected' : ''}" onclick="toggleEditParticipant(this, '${m}')">${m}</div>`;
+                                }).join('')}
+                            </div>
                         </div>
                         <div class="edit-field">
                             <label>备注</label>
@@ -1141,12 +1164,21 @@
             const payer = document.getElementById(`edit-payer-${id}`).value;
             const note = document.getElementById(`edit-note-${id}`).value;
 
+            // 获取选中的参与人
+            const selectedParticipants = Array.from(document.querySelectorAll(`#edit-participants-${id} .participant-option.selected`))
+                .map(el => el.textContent);
+
             if (isNaN(amount) || amount <= 0) {
                 showToast('请输入有效金额');
                 return;
             }
 
-            // 获取原始记录以保留其他字段
+            if (selectedParticipants.length === 0) {
+                showToast('至少选择一位参与人');
+                return;
+            }
+
+            // 获取原始记录以保留时间字段
             const originalExpense = expenses.find(e => e.id === id);
             if (!originalExpense) {
                 showToast('记录不存在');
@@ -1158,7 +1190,7 @@
                 category,
                 amount,
                 payer,
-                participants: originalExpense.participants,
+                participants: selectedParticipants,
                 note,
                 createdBy: currentNickname
             };
