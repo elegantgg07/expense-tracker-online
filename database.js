@@ -16,7 +16,7 @@ class Database {
   }
 
   // 初始化表结构
-  initTables() {
+  async initTables() {
     // 房间表 - 添加 name 字段
     this.db.run(`
       CREATE TABLE IF NOT EXISTS rooms (
@@ -43,6 +43,41 @@ class Database {
         FOREIGN KEY (room_code) REFERENCES rooms(room_code)
       )
     `);
+
+    // 迁移：检查并添加 name 列（如果表已存在但缺少该列）
+    await this.migrateAddNameColumn();
+  }
+
+  // 迁移：为已存在的 rooms 表添加 name 列
+  async migrateAddNameColumn() {
+    return new Promise((resolve, reject) => {
+      // 检查 name 列是否存在
+      this.db.all("PRAGMA table_info(rooms)", (err, columns) => {
+        if (err) {
+          console.error('检查表结构失败:', err);
+          return resolve(); // 继续运行，不阻塞
+        }
+
+        const hasNameColumn = columns.some(col => col.name === 'name');
+
+        if (!hasNameColumn) {
+          console.log('迁移：为 rooms 表添加 name 列');
+          this.db.run(
+            "ALTER TABLE rooms ADD COLUMN name TEXT DEFAULT '未命名项目'",
+            (err) => {
+              if (err) {
+                console.error('添加 name 列失败:', err);
+              } else {
+                console.log('成功添加 name 列');
+              }
+              resolve();
+            }
+          );
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 
   // 生成 6 位房间码
