@@ -29,6 +29,46 @@
             font-weight: bold;
             text-shadow: 2px 2px 0 #E9C46A;
             font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+            cursor: pointer;
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        h1:hover .edit-icon {
+            opacity: 1;
+        }
+        .edit-icon {
+            font-size: 1.2rem;
+            margin-left: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* 项目名称编辑 */
+        .project-name-edit {
+            background: #FFF8E7;
+            border: 3px solid #D4A373;
+            border-radius: 15px 20px 18px 12px;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto 30px;
+            box-shadow: 4px 4px 0 rgba(93, 64, 55, 0.15);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .project-name-edit input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #D7CCC8;
+            border-radius: 8px 12px 10px 15px;
+            font-size: 18px;
+            background: #FFF;
+            color: #5D4037;
+        }
+        .project-name-edit .btn {
+            width: auto;
+            padding: 10px 20px;
         }
 
         /* 登录/创建项目界面 - 手绘风格 */
@@ -626,7 +666,17 @@
 </head>
 <body>
     <div class="container">
-        <h1>📒 多人记账本</h1>
+        <h1 id="projectTitle" onclick="startEditProjectName()">
+            <span id="projectNameDisplay">📒 多人记账本</span>
+            <span class="edit-icon">✏️</span>
+        </h1>
+
+        <!-- 项目名称编辑框 -->
+        <div class="project-name-edit" id="projectNameEditContainer" style="display: none;">
+            <input type="text" id="projectNameEditInput" placeholder="输入项目名称">
+            <button class="btn btn-save" onclick="saveProjectName()">保存</button>
+            <button class="btn btn-cancel" onclick="cancelEditProjectName()">取消</button>
+        </div>
 
         <!-- 登录/创建项目界面 -->
         <div class="auth-container" id="authContainer">
@@ -646,6 +696,10 @@
             <div class="form-group">
                 <label>你的昵称</label>
                 <input type="text" id="nicknameInput" placeholder="输入你的昵称" value="我">
+            </div>
+            <div class="form-group" id="projectNameGroup">
+                <label>项目名称（可选）</label>
+                <input type="text" id="projectNameInput" placeholder="例如：周末聚餐、旅行记账" value="">
             </div>
             <button class="btn btn-primary" onclick="createRoom()">创建新项目</button>
             <div class="divider"><span>或</span></div>
@@ -751,6 +805,7 @@
     <script>
         const socket = io();
         let currentRoom = null;
+        let currentRoomName = '未命名项目';
         let currentNickname = '';
         let members = [];
         let expenses = [];
@@ -835,13 +890,18 @@
         // 创建项目
         async function createRoom() {
             const nickname = document.getElementById('nicknameInput').value.trim();
+            const projectName = document.getElementById('projectNameInput').value.trim();
             if (!nickname) {
                 showToast('请输入昵称');
                 return;
             }
 
             try {
-                const res = await fetch('/api/room/create', { method: 'POST' });
+                const res = await fetch('/api/room/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: projectName || '未命名项目' })
+                });
                 const data = await res.json();
                 if (data.success) {
                     currentRoom = data.roomCode;
@@ -885,9 +945,11 @@
                 if (data.success) {
                     members = data.members;
                     expenses = data.expenses;
+                    currentRoomName = data.roomName || '未命名项目';
                     enterMainInterface(roomCode);
                     setupSocketListeners();
                     updateUI();
+                    updateProjectNameDisplay();
                     showToast('成功进入项目！');
                     // 保存项目信息到 localStorage
                     saveRoomInfo(roomCode, nickname);
@@ -933,6 +995,12 @@
                     updateUI();
                     showToast(`${expense.createdBy || '有人'} 修改了一条记录`);
                 }
+            });
+
+            socket.on('room:nameUpdated', (data) => {
+                currentRoomName = data.name;
+                updateProjectNameDisplay();
+                showToast(`${data.updatedBy || '有人'} 修改了项目名称`);
             });
         }
 
@@ -1327,6 +1395,54 @@
             navigator.clipboard.writeText(code).then(() => {
                 showToast('项目码已复制！');
             });
+        }
+
+        // 更新项目名称显示
+        function updateProjectNameDisplay() {
+            document.getElementById('projectNameDisplay').textContent = currentRoomName || '📒 多人记账本';
+        }
+
+        // 开始编辑项目名称
+        function startEditProjectName() {
+            document.getElementById('projectTitle').style.display = 'none';
+            document.getElementById('projectNameEditContainer').style.display = 'flex';
+            document.getElementById('projectNameEditInput').value = currentRoomName === '📒 多人记账本' ? '' : currentRoomName;
+            document.getElementById('projectNameEditInput').focus();
+        }
+
+        // 取消编辑项目名称
+        function cancelEditProjectName() {
+            document.getElementById('projectTitle').style.display = 'inline-block';
+            document.getElementById('projectNameEditContainer').style.display = 'none';
+        }
+
+        // 保存项目名称
+        async function saveProjectName() {
+            const newName = document.getElementById('projectNameEditInput').value.trim();
+            if (!newName) {
+                showToast('请输入项目名称');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/room/${currentRoom}/name`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName, updatedBy: currentNickname })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    currentRoomName = newName;
+                    updateProjectNameDisplay();
+                    cancelEditProjectName();
+                    showToast('项目名称已更新');
+                } else {
+                    showToast(data.error || '更新失败');
+                }
+            } catch (err) {
+                showToast('网络错误');
+            }
         }
     </script>
 </body>

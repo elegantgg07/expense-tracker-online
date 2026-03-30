@@ -17,10 +17,11 @@ class Database {
 
   // 初始化表结构
   initTables() {
-    // 房间表
+    // 房间表 - 添加 name 字段
     this.db.run(`
       CREATE TABLE IF NOT EXISTS rooms (
         room_code TEXT PRIMARY KEY,
+        name TEXT DEFAULT '未命名项目',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         members TEXT DEFAULT '[]'
       )
@@ -55,17 +56,34 @@ class Database {
   }
 
   // 创建房间
-  async createRoom() {
+  async createRoom(name = '未命名项目') {
     const roomCode = this.generateRoomCode();
     return new Promise((resolve, reject) => {
       this.db.run(
-        'INSERT INTO rooms (room_code) VALUES (?)',
-        [roomCode],
+        'INSERT INTO rooms (room_code, name) VALUES (?, ?)',
+        [roomCode, name],
         (err) => {
           if (err) {
             reject(err);
           } else {
             resolve(roomCode);
+          }
+        }
+      );
+    });
+  }
+
+  // 更新项目名称
+  async updateRoomName(roomCode, name) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        'UPDATE rooms SET name = ? WHERE room_code = ?',
+        [name, roomCode],
+        (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(true);
           }
         }
       );

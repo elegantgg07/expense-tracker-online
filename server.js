@@ -27,7 +27,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 创建房间
 app.post('/api/room/create', async (req, res) => {
   try {
-    const roomCode = await db.createRoom();
+    const { name } = req.body;
+    const roomCode = await db.createRoom(name);
     res.json({ success: true, roomCode });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -41,7 +42,7 @@ app.post('/api/room/join', async (req, res) => {
     const room = await db.getRoom(roomCode);
 
     if (!room) {
-      return res.status(404).json({ success: false, error: '房间不存在' });
+      return res.status(404).json({ success: false, error: '项目不存在' });
     }
 
     await db.addMember(roomCode, nickname);
@@ -51,9 +52,27 @@ app.post('/api/room/join', async (req, res) => {
     res.json({
       success: true,
       roomCode,
+      roomName: room.name,
       members,
       expenses
     });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 更新项目名称
+app.put('/api/room/:roomCode/name', async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const { name } = req.body;
+
+    await db.updateRoomName(roomCode, name);
+
+    // 广播更新事件给房间内所有人
+    broadcastToRoom(roomCode, 'room:nameUpdated', { roomCode, name });
+
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
