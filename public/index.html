@@ -106,6 +106,49 @@
             color: #999;
         }
 
+        /* 快速进入提示卡片 */
+        .quick-enter-card {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #90caf9;
+            display: none;
+        }
+        .quick-enter-card.show {
+            display: block;
+        }
+        .quick-enter-card h3 {
+            color: #1976d2;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .quick-enter-card p {
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .quick-enter-card .room-code {
+            font-weight: bold;
+            color: #1565c0;
+        }
+        .quick-enter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .quick-enter-buttons .btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+        }
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #555;
+        }
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
         /* 主界面 */
         .main-container {
             display: none;
@@ -413,6 +456,18 @@
         <!-- 登录/创建房间界面 -->
         <div class="auth-container" id="authContainer">
             <h2>开始记账</h2>
+
+            <!-- 快速进入提示卡片 -->
+            <div class="quick-enter-card" id="quickEnterCard">
+                <h3>👋 欢迎回来！</h3>
+                <p>您之前加入过房间 <span class="room-code" id="savedRoomCode"></span>，是否以 <strong id="savedNickname"></strong> 身份直接进入？</p>
+                <div class="quick-enter-buttons">
+                    <button class="btn btn-primary" onclick="quickEnter()">直接进入</button>
+                    <button class="btn btn-secondary" onclick="showNormalForm()">重新输入</button>
+                </div>
+            </div>
+
+            <div id="normalForm">
             <div class="form-group">
                 <label>你的昵称</label>
                 <input type="text" id="nicknameInput" placeholder="输入你的昵称" value="我">
@@ -424,6 +479,7 @@
                 <input type="text" id="roomCodeInput" placeholder="输入6位房间码">
             </div>
             <button class="btn btn-success" onclick="joinRoom()">加入房间</button>
+            </div>
         </div>
 
         <!-- 主界面 -->
@@ -529,7 +585,69 @@
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('datetime').value = now.toISOString().slice(0, 16);
+
+            // 检查是否有保存的房间信息
+            checkSavedRoom();
         });
+
+        // 检查保存的房间信息
+        function checkSavedRoom() {
+            try {
+                const savedData = localStorage.getItem('lastRoom');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    // 检查是否在7天内
+                    const now = Date.now();
+                    const savedTime = data.timestamp || 0;
+                    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+                    if (now - savedTime < sevenDays && data.roomCode && data.nickname) {
+                        // 显示快速进入卡片
+                        document.getElementById('savedRoomCode').textContent = data.roomCode;
+                        document.getElementById('savedNickname').textContent = data.nickname;
+                        document.getElementById('quickEnterCard').classList.add('show');
+                        document.getElementById('normalForm').style.display = 'none';
+                    }
+                }
+            } catch (e) {
+                console.error('读取保存的房间信息失败', e);
+            }
+        }
+
+        // 快速进入
+        function quickEnter() {
+            try {
+                const savedData = localStorage.getItem('lastRoom');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    currentRoom = data.roomCode;
+                    currentNickname = data.nickname;
+                    joinRoomInternal(currentRoom, currentNickname);
+                }
+            } catch (e) {
+                showToast('快速进入失败，请重新输入');
+                showNormalForm();
+            }
+        }
+
+        // 显示正常表单
+        function showNormalForm() {
+            document.getElementById('quickEnterCard').classList.remove('show');
+            document.getElementById('normalForm').style.display = 'block';
+        }
+
+        // 保存房间信息
+        function saveRoomInfo(roomCode, nickname) {
+            try {
+                localStorage.setItem('lastRoom', JSON.stringify({
+                    roomCode: roomCode,
+                    nickname: nickname,
+                    timestamp: Date.now()
+                }));
+            } catch (e) {
+                console.error('保存房间信息失败', e);
+            }
+        }
 
         // 显示提示
         function showToast(message) {
@@ -596,6 +714,8 @@
                     setupSocketListeners();
                     updateUI();
                     showToast('成功进入房间！');
+                    // 保存房间信息到 localStorage
+                    saveRoomInfo(roomCode, nickname);
                 } else {
                     showToast(data.error || '加入失败');
                 }
