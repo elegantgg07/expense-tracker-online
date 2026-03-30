@@ -114,6 +114,23 @@ app.delete('/api/expenses/:id', async (req, res) => {
   }
 });
 
+// 更新消费记录
+app.put('/api/expenses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { roomCode, ...expenseData } = req.body;
+
+    const updatedExpense = await db.updateExpense(id, roomCode, expenseData);
+
+    // 广播更新事件给房间内所有人
+    broadcastToRoom(roomCode, 'expense:updated', updatedExpense);
+
+    res.json({ success: true, expense: updatedExpense });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // AA 计算
 app.get('/api/aa/:roomCode', async (req, res) => {
   try {

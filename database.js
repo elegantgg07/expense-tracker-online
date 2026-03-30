@@ -186,6 +186,48 @@ class Database {
     });
   }
 
+  // 更新消费记录
+  async updateExpense(id, roomCode, expense) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        `UPDATE expenses
+         SET datetime = ?, category = ?, amount = ?, payer = ?, participants = ?, note = ?
+         WHERE id = ? AND room_code = ?`,
+        [
+          expense.datetime,
+          expense.category,
+          expense.amount,
+          expense.payer,
+          JSON.stringify(expense.participants),
+          expense.note || '',
+          id,
+          roomCode
+        ],
+        (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            // 返回更新后的记录
+            this.db.get(
+              'SELECT * FROM expenses WHERE id = ?',
+              [id],
+              (err, row) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve({
+                    ...row,
+                    participants: JSON.parse(row.participants)
+                  });
+                }
+              }
+            );
+          }
+        }
+      );
+    });
+  }
+
   // 获取 AA 计算数据
   async getAAData(roomCode) {
     const expenses = await this.getExpenses(roomCode);

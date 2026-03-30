@@ -399,6 +399,79 @@
         .btn-delete:hover {
             background: #ee5a5a;
         }
+        .btn-edit {
+            background: #4a90d9;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        .btn-edit:hover {
+            background: #357abd;
+        }
+        .btn-save {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        .btn-save:hover {
+            background: #219a52;
+        }
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-cancel:hover {
+            background: #7f8c8d;
+        }
+        .expense-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .expense-edit-form {
+            display: none;
+            background: #f0f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .expense-edit-form.show {
+            display: block;
+        }
+        .edit-field {
+            margin-bottom: 10px;
+        }
+        .edit-field label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .edit-field input, .edit-field select {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .edit-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
 
         /* 空状态 */
         .empty-state {
@@ -750,6 +823,15 @@
                 expenses = expenses.filter(e => e.id !== data.id);
                 updateUI();
             });
+
+            socket.on('expense:updated', (expense) => {
+                const index = expenses.findIndex(e => e.id === expense.id);
+                if (index !== -1) {
+                    expenses[index] = expense;
+                    updateUI();
+                    showToast(`${expense.createdBy || '有人'} 修改了一条记录`);
+                }
+            });
         }
 
         // 更新付款人下拉框
@@ -860,7 +942,7 @@
                 const date = new Date(exp.datetime);
                 const timeStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
                 return `
-                <div class="expense-item">
+                <div class="expense-item" id="expense-${exp.id}">
                     <div class="expense-info">
                         <div class="expense-header">
                             <span class="expense-category">${exp.category}</span>
@@ -871,7 +953,43 @@
                             ${exp.note ? ' · ' + exp.note : ''}
                         </div>
                     </div>
-                    <button class="btn-delete" onclick="deleteExpense(${exp.id})">删除</button>
+                    <div class="expense-actions">
+                        <button class="btn-edit" onclick="startEditExpense(${exp.id})">编辑</button>
+                        <button class="btn-delete" onclick="deleteExpense(${exp.id})">删除</button>
+                    </div>
+                    <div class="expense-edit-form" id="edit-form-${exp.id}">
+                        <div class="edit-field">
+                            <label>金额</label>
+                            <input type="number" id="edit-amount-${exp.id}" step="0.01" value="${exp.amount}">
+                        </div>
+                        <div class="edit-field">
+                            <label>类型</label>
+                            <select id="edit-category-${exp.id}">
+                                <option value="餐饮" ${exp.category === '餐饮' ? 'selected' : ''}>餐饮</option>
+                                <option value="交通" ${exp.category === '交通' ? 'selected' : ''}>交通</option>
+                                <option value="购物" ${exp.category === '购物' ? 'selected' : ''}>购物</option>
+                                <option value="娱乐" ${exp.category === '娱乐' ? 'selected' : ''}>娱乐</option>
+                                <option value="居住" ${exp.category === '居住' ? 'selected' : ''}>居住</option>
+                                <option value="医疗" ${exp.category === '医疗' ? 'selected' : ''}>医疗</option>
+                                <option value="学习" ${exp.category === '学习' ? 'selected' : ''}>学习</option>
+                                <option value="其他" ${exp.category === '其他' ? 'selected' : ''}>其他</option>
+                            </select>
+                        </div>
+                        <div class="edit-field">
+                            <label>付款人</label>
+                            <select id="edit-payer-${exp.id}">
+                                ${members.map(m => `<option value="${m}" ${m === exp.payer ? 'selected' : ''}>${m}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="edit-field">
+                            <label>备注</label>
+                            <input type="text" id="edit-note-${exp.id}" value="${exp.note || ''}">
+                        </div>
+                        <div class="edit-actions">
+                            <button class="btn-save" onclick="saveEditExpense(${exp.id})">保存</button>
+                            <button class="btn-cancel" onclick="cancelEditExpense(${exp.id})">取消</button>
+                        </div>
+                    </div>
                 </div>
             `}).join('');
         }
@@ -993,6 +1111,80 @@
 
             html += '</div>';
             container.innerHTML = html;
+        }
+
+        // 开始编辑消费记录
+        function startEditExpense(id) {
+            // 隐藏其他所有编辑表单
+            document.querySelectorAll('.expense-edit-form').forEach(form => {
+                form.classList.remove('show');
+            });
+            // 显示当前编辑表单
+            const editForm = document.getElementById(`edit-form-${id}`);
+            if (editForm) {
+                editForm.classList.add('show');
+            }
+        }
+
+        // 取消编辑
+        function cancelEditExpense(id) {
+            const editForm = document.getElementById(`edit-form-${id}`);
+            if (editForm) {
+                editForm.classList.remove('show');
+            }
+        }
+
+        // 保存编辑
+        async function saveEditExpense(id) {
+            const amount = parseFloat(document.getElementById(`edit-amount-${id}`).value);
+            const category = document.getElementById(`edit-category-${id}`).value;
+            const payer = document.getElementById(`edit-payer-${id}`).value;
+            const note = document.getElementById(`edit-note-${id}`).value;
+
+            if (isNaN(amount) || amount <= 0) {
+                showToast('请输入有效金额');
+                return;
+            }
+
+            // 获取原始记录以保留其他字段
+            const originalExpense = expenses.find(e => e.id === id);
+            if (!originalExpense) {
+                showToast('记录不存在');
+                return;
+            }
+
+            const updatedExpense = {
+                datetime: originalExpense.datetime,
+                category,
+                amount,
+                payer,
+                participants: originalExpense.participants,
+                note,
+                createdBy: currentNickname
+            };
+
+            try {
+                const res = await fetch(`/api/expenses/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roomCode: currentRoom, ...updatedExpense })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // 本地更新（等待 socket 事件会再更新一次）
+                    const index = expenses.findIndex(e => e.id === id);
+                    if (index !== -1) {
+                        expenses[index] = data.expense;
+                        updateUI();
+                    }
+                    cancelEditExpense(id);
+                } else {
+                    showToast(data.error || '保存失败');
+                }
+            } catch (err) {
+                showToast('网络错误');
+            }
         }
 
         // 复制房间码
