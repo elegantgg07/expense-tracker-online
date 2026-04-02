@@ -468,6 +468,66 @@
             box-shadow: 2px 0 0 rgba(93, 64, 55, 0.1);
         }
 
+        /* 类别管理 */
+        .category-manage {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #D7CCC8;
+        }
+        .category-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .category-tag {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            border-radius: 15px 12px 18px 10px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #5D4037;
+            border: 2px solid;
+            background: #FFF;
+        }
+        .category-tag .delete-btn {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(93, 64, 55, 0.2);
+            color: #5D4037;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 4px;
+        }
+        .category-tag .delete-btn:hover {
+            background: rgba(93, 64, 55, 0.4);
+        }
+        .category-add-form {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .category-add-form input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #D7CCC8;
+            border-radius: 8px 12px 10px 15px;
+            font-size: 14px;
+        }
+        .category-add-form .btn {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
         /* AA 结果 */
         .aa-result {
             background: #E8F5E9;
@@ -829,6 +889,15 @@
                             <div class="value">¥<span id="totalAmount">0.00</span></div>
                         </div>
                         <div class="category-chart" id="categoryChart"></div>
+                        <div class="category-manage" id="categoryManage">
+                            <div class="category-list" id="categoryList"></div>
+                            <div class="category-add-form" id="categoryAddForm" style="display: none;">
+                                <input type="text" id="newCategoryName" placeholder="输入类别名称" maxlength="10">
+                                <button class="btn btn-primary" onclick="addCategory()">添加</button>
+                                <button class="btn" onclick="toggleCategoryForm()">取消</button>
+                            </div>
+                            <button class="btn btn-success" id="showCategoryFormBtn" onclick="toggleCategoryForm()">+ 添加类别</button>
+                        </div>
                     </div>
                 </div>
 
@@ -862,6 +931,10 @@
         let currentNickname = '';
         let members = [];
         let expenses = [];
+        let categories = [];
+
+        // 预设颜色（用于自动分配）
+        const presetColors = ['#FF9AA2', '#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7', '#C7CEEA', '#F8B195', '#D4A373', '#F4A261', '#2A9D8F', '#E76F51', '#264653'];
 
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
@@ -998,6 +1071,7 @@
                 if (data.success) {
                     members = data.members;
                     expenses = data.expenses;
+                    categories = data.categories || [];
                     currentRoomName = data.roomName || '未命名项目';
                     enterMainInterface(roomCode);
                     setupSocketListeners();
@@ -1024,6 +1098,10 @@
             updatePayerSelect();
             // 更新参与人选择
             updateParticipantsSelect();
+            // 更新类别选择器
+            updateCategorySelect();
+            // 更新类别列表显示
+            updateCategoryList();
         }
 
         // 设置 Socket 监听
@@ -1055,6 +1133,20 @@
                 updateProjectNameDisplay();
                 showToast(`${data.updatedBy || '有人'} 修改了项目名称`);
             });
+
+            socket.on('category:added', (category) => {
+                categories.push(category);
+                updateCategorySelect();
+                updateCategoryList();
+                showToast(`添加了新类别: ${category.name}`);
+            });
+
+            socket.on('category:deleted', (data) => {
+                categories = categories.filter(c => c.name !== data.name);
+                updateCategorySelect();
+                updateCategoryList();
+                showToast(`删除了类别: ${data.name}`);
+            });
         }
 
         // 更新付款人下拉框
@@ -1082,6 +1174,107 @@
         // 编辑模式下切换参与人选择
         function toggleEditParticipant(el, name) {
             el.classList.toggle('selected');
+        }
+
+        // 更新类别选择器
+        function updateCategorySelect() {
+            const select = document.getElementById('category');
+            select.innerHTML = categories.map(c =>
+                `<option value="${c.name}">${c.name}</option>`
+            ).join('');
+        }
+
+        // 更新类别列表显示
+        function updateCategoryList() {
+            const container = document.getElementById('categoryList');
+            container.innerHTML = categories.map(c => `
+                <div class="category-tag" style="border-color: ${c.color};">
+                    ${c.name}
+                    <button class="delete-btn" onclick="deleteCategory('${c.name}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        // 切换类别添加表单
+        function toggleCategoryForm() {
+            const form = document.getElementById('categoryAddForm');
+            const btn = document.getElementById('showCategoryFormBtn');
+            if (form.style.display === 'none') {
+                form.style.display = 'flex';
+                btn.style.display = 'none';
+                document.getElementById('newCategoryName').focus();
+            } else {
+                form.style.display = 'none';
+                btn.style.display = 'block';
+                document.getElementById('newCategoryName').value = '';
+            }
+        }
+
+        // 添加类别
+        async function addCategory() {
+            const input = document.getElementById('newCategoryName');
+            const name = input.value.trim();
+
+            if (!name) {
+                showToast('请输入类别名称');
+                return;
+            }
+
+            if (categories.some(c => c.name === name)) {
+                showToast('类别已存在');
+                return;
+            }
+
+            // 自动分配颜色
+            const color = presetColors[categories.length % presetColors.length];
+
+            try {
+                const res = await fetch(`/api/room/${currentRoom}/categories`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, color, sortOrder: categories.length })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    categories.push(data.category);
+                    updateCategorySelect();
+                    updateCategoryList();
+                    toggleCategoryForm();
+                    showToast('类别添加成功');
+                } else {
+                    showToast(data.error || '添加失败');
+                }
+            } catch (err) {
+                showToast('网络错误');
+            }
+        }
+
+        // 删除类别
+        async function deleteCategory(name) {
+            if (!confirm(`确定要删除类别 "${name}" 吗？`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/room/${currentRoom}/categories/${encodeURIComponent(name)}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    categories = categories.filter(c => c.name !== name);
+                    updateCategorySelect();
+                    updateCategoryList();
+                    showToast('类别已删除');
+                } else {
+                    showToast(data.error || '删除失败');
+                }
+            } catch (err) {
+                showToast('网络错误');
+            }
         }
 
         // 添加消费记录
@@ -1202,14 +1395,7 @@
                         <div class="edit-field">
                             <label>类型</label>
                             <select id="edit-category-${exp.id}">
-                                <option value="餐饮" ${exp.category === '餐饮' ? 'selected' : ''}>餐饮</option>
-                                <option value="交通" ${exp.category === '交通' ? 'selected' : ''}>交通</option>
-                                <option value="购物" ${exp.category === '购物' ? 'selected' : ''}>购物</option>
-                                <option value="娱乐" ${exp.category === '娱乐' ? 'selected' : ''}>娱乐</option>
-                                <option value="居住" ${exp.category === '居住' ? 'selected' : ''}>居住</option>
-                                <option value="医疗" ${exp.category === '医疗' ? 'selected' : ''}>医疗</option>
-                                <option value="学习" ${exp.category === '学习' ? 'selected' : ''}>学习</option>
-                                <option value="其他" ${exp.category === '其他' ? 'selected' : ''}>其他</option>
+                                ${categories.map(c => `<option value="${c.name}" ${c.name === exp.category ? 'selected' : ''}>${c.name}</option>`).join('')}
                             </select>
                         </div>
                         <div class="edit-field">
@@ -1251,31 +1437,25 @@
                 byCategory[e.category] = (byCategory[e.category] || 0) + e.amount;
             });
 
-            // 类别颜色映射
-            const categoryColors = {
-                '餐饮': '#FF9AA2',
-                '交通': '#FFB7B2',
-                '购物': '#FFDAC1',
-                '娱乐': '#E2F0CB',
-                '居住': '#B5EAD7',
-                '医疗': '#C7CEEA',
-                '学习': '#F8B195',
-                '其他': '#D4A373'
-            };
+            // 从全局 categories 数组构建颜色映射
+            const categoryColorMap = {};
+            categories.forEach(c => {
+                categoryColorMap[c.name] = c.color;
+            });
 
             const chartContainer = document.getElementById('categoryChart');
-            const categories = Object.entries(byCategory);
+            const categoryEntries = Object.entries(byCategory);
 
-            if (categories.length === 0) {
+            if (categoryEntries.length === 0) {
                 chartContainer.innerHTML = '<div style="color:#999;font-size:14px;text-align:center;padding:20px;">暂无统计数据</div>';
             } else {
                 // 按金额降序排序
-                categories.sort((a, b) => b[1] - a[1]);
-                const maxAmount = categories[0][1];
+                categoryEntries.sort((a, b) => b[1] - a[1]);
+                const maxAmount = categoryEntries[0][1];
 
-                chartContainer.innerHTML = categories.map(([cat, amt]) => {
+                chartContainer.innerHTML = categoryEntries.map(([cat, amt]) => {
                     const percentage = (amt / maxAmount * 100).toFixed(1);
-                    const color = categoryColors[cat] || '#D4A373';
+                    const color = categoryColorMap[cat] || '#D4A373';
                     return `
                         <div class="chart-row">
                             <span class="chart-label">${cat}</span>

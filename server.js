@@ -29,6 +29,23 @@ app.post('/api/room/create', async (req, res) => {
   try {
     const { name } = req.body;
     const roomCode = await db.createRoom(name);
+
+    // 添加默认类别
+    const defaultCategories = [
+      { name: '餐饮', color: '#FF9AA2' },
+      { name: '交通', color: '#FFB7B2' },
+      { name: '购物', color: '#FFDAC1' },
+      { name: '娱乐', color: '#E2F0CB' },
+      { name: '居住', color: '#B5EAD7' },
+      { name: '医疗', color: '#C7CEEA' },
+      { name: '学习', color: '#F8B195' },
+      { name: '其他', color: '#D4A373' }
+    ];
+
+    for (let i = 0; i < defaultCategories.length; i++) {
+      await db.addCategory(roomCode, { ...defaultCategories[i], sortOrder: i });
+    }
+
     res.json({ success: true, roomCode });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -48,13 +65,15 @@ app.post('/api/room/join', async (req, res) => {
     await db.addMember(roomCode, nickname);
     const members = await db.getRoomMembers(roomCode);
     const expenses = await db.getExpenses(roomCode);
+    const categories = await db.getCategories(roomCode);
 
     res.json({
       success: true,
       roomCode,
       roomName: room.name,
       members,
-      expenses
+      expenses,
+      categories
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -83,6 +102,55 @@ app.get('/api/room/:roomCode/members', async (req, res) => {
   try {
     const members = await db.getRoomMembers(req.params.roomCode);
     res.json({ success: true, members });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 获取房间类别
+app.get('/api/room/:roomCode/categories', async (req, res) => {
+  try {
+    const categories = await db.getCategories(req.params.roomCode);
+    res.json({ success: true, categories });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 添加房间类别
+app.post('/api/room/:roomCode/categories', async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const { name, color, sortOrder } = req.body;
+
+    // 检查类别名是否已存在
+    const existingCategories = await db.getCategories(roomCode);
+    if (existingCategories.some(c => c.name === name)) {
+      return res.status(400).json({ success: false, error: '类别已存在' });
+    }
+
+    const category = await db.addCategory(roomCode, { name, color, sortOrder });
+
+    // 广播给房间内所有人
+    broadcastToRoom(roomCode, 'category:added', category);
+
+    res.json({ success: true, category });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 删除房间类别
+app.delete('/api/room/:roomCode/categories/:name', async (req, res) => {
+  try {
+    const { roomCode, name } = req.params;
+
+    await db.deleteCategory(roomCode, name);
+
+    // 广播给房间内所有人
+    broadcastToRoom(roomCode, 'category:deleted', { roomCode, name });
+
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

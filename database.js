@@ -44,8 +44,25 @@ class Database {
       )
     `);
 
+    // 类别表 - 每个房间独立管理
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        room_code TEXT NOT NULL,
+        name TEXT NOT NULL,
+        color TEXT NOT NULL,
+        sort_order INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (room_code) REFERENCES rooms(room_code),
+        UNIQUE(room_code, name)
+      )
+    `);
+
     // 迁移：检查并添加 name 列（如果表已存在但缺少该列）
     await this.migrateAddNameColumn();
+
+    // 迁移：为旧房间添加默认类别
+    await this.migrateDefaultCategories();
   }
 
   // 迁移：为已存在的 rooms 表添加 name 列
@@ -76,6 +93,46 @@ class Database {
         } else {
           resolve();
         }
+      });
+    });
+  }
+
+  // 迁移：为没有类别的房间添加默认类别
+  async migrateDefaultCategories() {
+    const defaultCategories = [
+      { name: '餐饮', color: '#FF9AA2' },
+      { name: '交通', color: '#FFB7B2' },
+      { name: '购物', color: '#FFDAC1' },
+      { name: '娱乐', color: '#E2F0CB' },
+      { name: '居住', color: '#B5EAD7' },
+      { name: '医疗', color: '#C7CEEA' },
+      { name: '学习', color: '#F8B195' },
+      { name: '其他', color: '#D4A373' }
+    ];
+
+    return new Promise((resolve, reject) => {
+      // 获取所有房间
+      this.db.all('SELECT room_code FROM rooms', async (err, rooms) => {
+        if (err) {
+          console.error('获取房间列表失败:', err);
+          return resolve();
+        }
+
+        for (const room of rooms) {
+          // 检查该房间是否已有类别
+          const categories = await this.getCategories(room.room_code);
+          if (categories.length === 0) {
+            // 添加默认类别
+            for (let i = 0; i < defaultCategories.length; i++) {
+              await this.addCategory(room.room_code, {
+                ...defaultCategories[i],
+                sortOrder: i
+              });
+            }
+            console.log(`为房间 ${room.room_code} 添加默认类别`);
+          }
+        }
+        resolve();
       });
     });
   }
@@ -172,6 +229,65 @@ class Database {
     const room = await this.getRoom(roomCode);
     if (!room) return [];
     return JSON.parse(room.members || '[]');
+  }
+
+  // ===== 类别管理 =====
+
+  // 获取房间所有类别
+  async getCategories(roomCode) {
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        'SELECT * FROM categories WHERE room_code = ? ORDER BY sort_order, created_at',
+        [roomCode],
+        (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows || []);
+          }
+        }
+      );
+    });
+  }
+
+  // 添加类别
+  async addCategory(roomCode, category) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        'INSERT INTO categories (room_code, name, color, sort_order) VALUES (?, ?, ?, ?)',
+        [roomCode, category.name, category.color, category.sortOrder || 0],
+        function(err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({
+              id: this.lastID,
+              room_code: roomCode,
+              name: category.name,
+              color: category.color,
+              sort_order: category.sortOrder || 0
+            });
+          }
+        }
+      );
+    });
+  }
+
+  // 删除类别
+  async deleteCategory(roomCode, categoryName) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        'DELETE FROM categories WHERE room_code = ? AND name = ?',
+        [roomCode, categoryName],
+        (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(true);
+          }
+        }
+      );
+    });
   }
 
   // 添加消费记录
