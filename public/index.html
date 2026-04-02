@@ -1135,17 +1135,23 @@
             });
 
             socket.on('category:added', (category) => {
-                categories.push(category);
-                updateCategorySelect();
-                updateCategoryList();
-                showToast(`添加了新类别: ${category.name}`);
+                // 避免重复添加（检查是否已存在）
+                if (!categories.some(c => c.name === category.name)) {
+                    categories.push(category);
+                    updateCategorySelect();
+                    updateCategoryList();
+                    showToast(`添加了新类别: ${category.name}`);
+                }
             });
 
             socket.on('category:deleted', (data) => {
-                categories = categories.filter(c => c.name !== data.name);
-                updateCategorySelect();
-                updateCategoryList();
-                showToast(`删除了类别: ${data.name}`);
+                // 只有存在时才删除
+                if (categories.some(c => c.name === data.name)) {
+                    categories = categories.filter(c => c.name !== data.name);
+                    updateCategorySelect();
+                    updateCategoryList();
+                    showToast(`删除了类别: ${data.name}`);
+                }
             });
         }
 
