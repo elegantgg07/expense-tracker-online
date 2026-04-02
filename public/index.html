@@ -427,6 +427,47 @@
             font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
         }
 
+        /* 类别条形图 */
+        .category-chart {
+            margin-top: 15px;
+        }
+        .chart-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        .chart-label {
+            width: 50px;
+            font-size: 13px;
+            color: #5D4037;
+            font-weight: bold;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .chart-bar-wrapper {
+            flex: 1;
+            background: #FFF;
+            border: 2px solid #D7CCC8;
+            border-radius: 10px;
+            height: 28px;
+            overflow: hidden;
+            position: relative;
+        }
+        .chart-bar {
+            height: 100%;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #5D4037;
+            transition: width 0.5s ease;
+            box-shadow: 2px 0 0 rgba(93, 64, 55, 0.1);
+        }
+
         /* AA 结果 */
         .aa-result {
             background: #E8F5E9;
@@ -787,7 +828,7 @@
                             <div class="label">总支出</div>
                             <div class="value">¥<span id="totalAmount">0.00</span></div>
                         </div>
-                        <div class="stat-grid" id="statGrid"></div>
+                        <div class="category-chart" id="categoryChart"></div>
                     </div>
                 </div>
 
@@ -1210,16 +1251,42 @@
                 byCategory[e.category] = (byCategory[e.category] || 0) + e.amount;
             });
 
-            const statGrid = document.getElementById('statGrid');
-            if (Object.keys(byCategory).length === 0) {
-                statGrid.innerHTML = '<div style="color:#999;font-size:14px;">暂无统计数据</div>';
+            // 类别颜色映射
+            const categoryColors = {
+                '餐饮': '#FF9AA2',
+                '交通': '#FFB7B2',
+                '购物': '#FFDAC1',
+                '娱乐': '#E2F0CB',
+                '居住': '#B5EAD7',
+                '医疗': '#C7CEEA',
+                '学习': '#F8B195',
+                '其他': '#D4A373'
+            };
+
+            const chartContainer = document.getElementById('categoryChart');
+            const categories = Object.entries(byCategory);
+
+            if (categories.length === 0) {
+                chartContainer.innerHTML = '<div style="color:#999;font-size:14px;text-align:center;padding:20px;">暂无统计数据</div>';
             } else {
-                statGrid.innerHTML = Object.entries(byCategory).map(([cat, amt]) => `
-                    <div class="stat-item">
-                        <div class="label">${cat}</div>
-                        <div class="value">¥${amt.toFixed(2)}</div>
-                    </div>
-                `).join('');
+                // 按金额降序排序
+                categories.sort((a, b) => b[1] - a[1]);
+                const maxAmount = categories[0][1];
+
+                chartContainer.innerHTML = categories.map(([cat, amt]) => {
+                    const percentage = (amt / maxAmount * 100).toFixed(1);
+                    const color = categoryColors[cat] || '#D4A373';
+                    return `
+                        <div class="chart-row">
+                            <span class="chart-label">${cat}</span>
+                            <div class="chart-bar-wrapper">
+                                <div class="chart-bar" style="width: ${percentage}%; background: ${color};">
+                                    ¥${amt.toFixed(0)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             }
         }
 
