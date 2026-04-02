@@ -296,6 +296,18 @@
             }
         }
 
+        /* datetime-local 移动端适配 */
+        input[type="datetime-local"] {
+            width: 100%;
+            min-width: 100%;
+        }
+        @media (max-width: 600px) {
+            input[type="datetime-local"] {
+                font-size: 14px;
+                padding: 10px 8px;
+            }
+        }
+
         /* 卡片 */
         .card {
             background: #FFF8E7;
