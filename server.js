@@ -232,6 +232,57 @@ app.get('/api/aa/:roomCode', async (req, res) => {
   }
 });
 
+// 导出消费记录为 CSV
+app.get('/api/expenses/:roomCode/export', async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const expenses = await db.getExpenses(roomCode);
+
+    // CSV 表头
+    const headers = ['序号', '时间', '类别', '金额', '付款人', '参与人', '备注', '创建人'];
+
+    // 转换数据为 CSV 行
+    const rows = expenses.map((exp, index) => {
+      const date = new Date(exp.datetime);
+      const timeStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+      const participants = Array.isArray(exp.participants) ? exp.participants.join(', ') : exp.participants;
+
+      return [
+        index + 1,
+        timeStr,
+        exp.category,
+        exp.amount.toFixed(2),
+        exp.payer,
+        participants,
+        exp.note || '',
+        exp.created_by || ''
+      ];
+    });
+
+    // 生成 CSV 内容（添加 BOM 以支持 Excel 中文显示）
+    const BOM = '\uFEFF';
+    const csvContent = BOM + [headers, ...rows].map(row =>
+      row.map(cell => {
+        // 处理包含逗号或引号的单元格
+        const cellStr = String(cell);
+        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+          return `"${cellStr.replace(/"/g, '""')}"`;
+        }
+        return cellStr;
+      }).join(',')
+    ).join('\n');
+
+    // 设置响应头
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=expenses_${today}.csv`);
+
+    res.send(csvContent);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ===== Socket.io =====
 
 io.on('connection', (socket) => {

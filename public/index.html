@@ -682,6 +682,30 @@
             background: #90A4AE;
             transform: translate(-1px, -1px);
         }
+        .btn-export {
+            background: #81C784;
+            color: #FFF;
+            border: 2px solid #5D4037;
+            padding: 6px 12px;
+            border-radius: 8px 12px 10px 15px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 2px 2px 0 #5D4037;
+            margin-left: auto;
+        }
+        .btn-export:hover {
+            background: #66BB6A;
+            transform: translate(-1px, -1px);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .card-header h3 {
+            margin-bottom: 0;
+        }
         .expense-actions {
             display: flex;
             gap: 8px;
@@ -911,7 +935,10 @@
                     </div>
 
                     <div class="card">
-                        <h3>消费记录</h3>
+                        <div class="card-header">
+                            <h3>消费记录</h3>
+                            <button class="btn-export" onclick="exportToCSV()">导出 CSV</button>
+                        </div>
                         <div class="expense-list" id="expenseList">
                             <div class="empty-state">暂无记录</div>
                         </div>
@@ -1707,6 +1734,46 @@
                 }
             } catch (err) {
                 showToast('网络错误');
+            }
+        }
+
+        // 导出 CSV
+        async function exportToCSV() {
+            if (!currentRoom) {
+                showToast('请先加入项目');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/expenses/${currentRoom}/export`);
+                if (!res.ok) {
+                    throw new Error('导出失败');
+                }
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // 从响应头获取文件名，或使用默认文件名
+                const contentDisposition = res.headers.get('Content-Disposition');
+                let filename = 'expenses.csv';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename=([^;]+)/);
+                    if (match) {
+                        filename = match[1].replace(/['"]/g, '');
+                    }
+                }
+
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                showToast('导出成功');
+            } catch (err) {
+                showToast('导出失败');
             }
         }
     </script>
