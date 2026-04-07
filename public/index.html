@@ -289,13 +289,13 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
-            align-items: stretch;
         }
 
         /* 让左右两列使用 flex 布局 */
         .content-grid > div {
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
 
         @media (max-width: 900px) {
