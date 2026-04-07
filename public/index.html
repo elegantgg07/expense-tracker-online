@@ -586,6 +586,20 @@
             font-weight: bold;
         }
 
+        /* 统计概览卡片自适应高度 */
+        .card.stats-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .card.stats-card .category-chart {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 100px;
+        }
+
         /* 消费记录卡片自适应高度 */
         .card.expense-card {
             flex: 1;
@@ -926,7 +940,7 @@
                         </form>
                     </div>
 
-                    <div class="card">
+                    <div class="card stats-card">
                         <h3>统计概览</h3>
                         <div class="total-display">
                             <div class="label">总支出</div>
