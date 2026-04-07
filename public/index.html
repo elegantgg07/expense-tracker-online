@@ -1273,10 +1273,19 @@
                 return;
             }
 
+            // 前端去重检查
             if (categories.some(c => c.name === name)) {
                 showToast('类别已存在');
                 return;
             }
+
+            // 防止重复提交
+            const addBtn = document.querySelector('#categoryAddForm .btn-primary');
+            if (addBtn.disabled) return;
+
+            addBtn.disabled = true;
+            addBtn.textContent = '添加中...';
+            input.disabled = true;
 
             // 自动分配颜色
             const color = presetColors[categories.length % presetColors.length];
@@ -1301,6 +1310,11 @@
                 }
             } catch (err) {
                 showToast('网络错误');
+            } finally {
+                // 恢复按钮状态
+                addBtn.disabled = false;
+                addBtn.textContent = '添加';
+                input.disabled = false;
             }
         }
 

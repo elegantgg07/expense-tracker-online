@@ -136,6 +136,10 @@ app.post('/api/room/:roomCode/categories', async (req, res) => {
 
     res.json({ success: true, category });
   } catch (err) {
+    // 处理唯一约束错误
+    if (err.message && err.message.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ success: false, error: '类别已存在' });
+    }
     res.status(500).json({ success: false, error: err.message });
   }
 });
