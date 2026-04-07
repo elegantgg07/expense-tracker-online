@@ -289,10 +289,21 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
+            align-items: stretch;
         }
+
+        /* 让左右两列使用 flex 布局 */
+        .content-grid > div {
+            display: flex;
+            flex-direction: column;
+        }
+
         @media (max-width: 900px) {
             .content-grid {
                 grid-template-columns: 1fr;
+            }
+            .content-grid > div {
+                display: block;
             }
         }
 
@@ -575,10 +586,19 @@
             font-weight: bold;
         }
 
+        /* 消费记录卡片自适应高度 */
+        .card.expense-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
         /* 消费列表 */
         .expense-list {
-            max-height: 400px;
+            flex: 1;
             overflow-y: auto;
+            min-height: 200px;
         }
         .expense-item {
             background: #FFF8E7;
@@ -934,7 +954,7 @@
                         </div>
                     </div>
 
-                    <div class="card">
+                    <div class="card expense-card">
                         <div class="card-header">
                             <h3>消费记录</h3>
                             <button class="btn-export" onclick="exportToCSV()">导出 CSV</button>
