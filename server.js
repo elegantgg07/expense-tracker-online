@@ -107,6 +107,21 @@ app.get('/api/room/:roomCode/members', async (req, res) => {
   }
 });
 
+// 删除成员
+app.delete('/api/room/:roomCode/members/:name', async (req, res) => {
+  try {
+    const { roomCode, name } = req.params;
+    await db.removeMember(roomCode, name);
+
+    // 广播删除事件给房间内所有人
+    broadcastToRoom(roomCode, 'member:removed', { name });
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // 获取房间类别
 app.get('/api/room/:roomCode/categories', async (req, res) => {
   try {

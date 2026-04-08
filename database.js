@@ -231,6 +231,38 @@ class Database {
     return JSON.parse(room.members || '[]');
   }
 
+  // 删除成员（检查是否有消费记录）
+  async removeMember(roomCode, nickname) {
+    // 检查是否有消费记录
+    const expenses = await this.getExpenses(roomCode);
+    const hasExpenses = expenses.some(e =>
+      e.payer === nickname ||
+      (Array.isArray(e.participants) && e.participants.includes(nickname))
+    );
+
+    if (hasExpenses) {
+      throw new Error('该成员有消费记录，无法删除');
+    }
+
+    // 从成员列表移除
+    const members = await this.getRoomMembers(roomCode);
+    const newMembers = members.filter(m => m !== nickname);
+
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        'UPDATE rooms SET members = ? WHERE room_code = ?',
+        [JSON.stringify(newMembers), roomCode],
+        (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(true);
+          }
+        }
+      );
+    });
+  }
+
   // ===== 类别管理 =====
 
   // 获取房间所有类别

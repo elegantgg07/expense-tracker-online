@@ -272,16 +272,64 @@
         .member-tag {
             background: #FFE0B2;
             color: #5D4037;
-            padding: 5px 12px;
+            padding: 5px 8px 5px 12px;
             border-radius: 15px 20px 18px 12px;
             font-size: 14px;
             border: 2px solid #D4A373;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
         .member-tag.me {
             background: #D4A373;
             color: #FFF;
             border: 2px solid #5D4037;
+        }
+        .member-tag .delete-btn {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(93, 64, 55, 0.2);
+            color: #5D4037;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .member-tag .delete-btn:hover {
+            background: rgba(93, 64, 55, 0.4);
+        }
+        .member-tag.me .delete-btn {
+            background: rgba(255, 255, 255, 0.3);
+            color: #FFF;
+        }
+        .member-tag.me .delete-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .btn-add-member {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #5D4037;
+            background: #E9C46A;
+            color: #5D4037;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 2px 0 #5D4037;
+            transition: all 0.2s;
+        }
+        .btn-add-member:hover {
+            background: #E0BB5A;
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0 #5D4037;
         }
 
         /* 内容区域 */
@@ -1214,6 +1262,15 @@
                     showToast(`删除了类别: ${data.name}`);
                 }
             });
+
+            socket.on('member:removed', (data) => {
+                // 只有存在时才删除
+                if (members.includes(data.name)) {
+                    members = members.filter(m => m !== data.name);
+                    updateUI();
+                    showToast(`删除了成员: ${data.name}`);
+                }
+            });
         }
 
         // 更新付款人下拉框
@@ -1436,8 +1493,80 @@
         function updateMembersList() {
             const container = document.getElementById('membersList');
             container.innerHTML = members.map(m =>
-                `<span class="member-tag ${m === currentNickname ? 'me' : ''}">${m}</span>`
-            ).join('');
+                `<span class="member-tag ${m === currentNickname ? 'me' : ''}">
+                    ${m}
+                    <button class="delete-btn" onclick="removeMember('${m}')" title="删除成员">×</button>
+                </span>`
+            ).join('') +
+            `<button class="btn-add-member" onclick="showAddMemberForm()" title="添加成员">+</button>`;
+        }
+
+        // 删除成员
+        async function removeMember(name) {
+            // 检查是否有消费记录
+            const hasExpenses = expenses.some(e =>
+                e.payer === name ||
+                (Array.isArray(e.participants) && e.participants.includes(name))
+            );
+
+            if (hasExpenses) {
+                showToast('该成员有消费记录，无法删除');
+                return;
+            }
+
+            if (!confirm(`确定删除成员 "${name}" 吗？`)) return;
+
+            try {
+                const res = await fetch(`/api/room/${currentRoom}/members/${encodeURIComponent(name)}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    members = members.filter(m => m !== name);
+                    updateUI();
+                    showToast('成员已删除');
+                } else {
+                    showToast(data.error || '删除失败');
+                }
+            } catch (err) {
+                showToast('网络错误');
+            }
+        }
+
+        // 添加成员
+        async function showAddMemberForm() {
+            const name = prompt('请输入新成员昵称：');
+            if (!name || !name.trim()) return;
+
+            const trimmedName = name.trim();
+
+            // 检查是否已存在
+            if (members.includes(trimmedName)) {
+                showToast('成员已存在');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/room/join', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roomCode: currentRoom, nickname: trimmedName })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    members = data.members;
+                    updateUI();
+                    showToast('成员添加成功');
+                } else {
+                    showToast(data.error || '添加失败');
+                }
+            } catch (err) {
+                showToast('网络错误');
+            }
         }
 
         // 更新消费列表
